@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+/*
+* TODO ThreadLocal 相关的资料链接
+* */
 @RestController
 @RequestMapping("/threadlocal")
 public class ThreadLocalMisuseController {
