@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /*
+*
 * TODO ThreadLocal 相关的资料链接
 * */
 @RestController
@@ -27,5 +28,20 @@ public class ThreadLocalMisuseController {
         result.put("before", before);
         result.put("after", after);
         return result;
+    }
+
+    @GetMapping("/right")
+    public Map<String, String> right(@RequestParam Integer userId) {
+        String before = Thread.currentThread().getName() + ":" + currentUser.get();
+        currentUser.set(userId);
+        try {
+            String after = Thread.currentThread().getName() + ":" + currentUser.get();
+            HashMap<String, String> result = new HashMap<>();
+            result.put("before", before);
+            result.put("after", after);
+            return result;
+        } finally {
+            currentUser.remove();
+        }
     }
 }
