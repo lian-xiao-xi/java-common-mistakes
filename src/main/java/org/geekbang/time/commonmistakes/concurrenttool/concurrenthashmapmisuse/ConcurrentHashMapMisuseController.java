@@ -20,7 +20,7 @@ import java.util.stream.LongStream;
 @Slf4j
 public class ConcurrentHashMapMisuseController {
 
-    private final static int THREAD_COUNT = 10;
+    private final static int THREAD_COUNT = 8;
     private final static int ITEM_COUNT = 1000;
 
     private ConcurrentMap<String, Long> getData(int count) {
@@ -40,13 +40,42 @@ public class ConcurrentHashMapMisuseController {
         forkJoinPool.execute(new Runnable() {
             @Override
             public void run() {
-                IntStream.rangeClosed(1, THREAD_COUNT).parallel().forEach(new IntConsumer() {
+                IntStream.rangeClosed(1, 8).parallel().forEach(new IntConsumer() {
                     @Override
                     public void accept(int i) {
                         int gap = ITEM_COUNT - concurrentMap.size();
                         log.info("gap size: {} ", gap);
                         ConcurrentMap<String, Long> data = getData(gap);
                         concurrentMap.putAll(data);
+                    }
+                });
+            }
+        });
+        forkJoinPool.shutdown();
+        forkJoinPool.awaitTermination(1, TimeUnit.HOURS);
+
+        log.info("finish size:{}", concurrentMap.size());
+        return true;
+    }
+
+    @GetMapping("/right")
+    public boolean right() throws InterruptedException {
+        ConcurrentMap<String, Long> concurrentMap = this.getData(ITEM_COUNT - 100);
+        log.info("init size: {} ", concurrentMap.size());
+
+        ForkJoinPool forkJoinPool = new ForkJoinPool(THREAD_COUNT);
+        forkJoinPool.execute(new Runnable() {
+            @Override
+            public void run() {
+                IntStream.rangeClosed(1, 8).parallel().forEach(new IntConsumer() {
+                    @Override
+                    public void accept(int i) {
+                        synchronized (concurrentMap) {
+                            int gap = ITEM_COUNT - concurrentMap.size();
+                            log.info("gap size: {} ", gap);
+                            ConcurrentMap<String, Long> data = getData(gap);
+                            concurrentMap.putAll(data);
+                        }
                     }
                 });
             }
