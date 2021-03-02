@@ -1,6 +1,7 @@
 package org.geekbang.time.commonmistakes.concurrenttool.concurrenthashmapperformance;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,10 +23,27 @@ public class ConcurrentHashMapPerformanceController {
     private final static int THREAD_COUNT = 10;
     private final static int ITEM_COUNT = 10;
 
-    @GetMapping("normal")
-    public Map<Integer, Long> normalUse() throws InterruptedException {
+    @GetMapping("/performance")
+    public boolean performance() throws InterruptedException {
         StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
+        stopWatch.start("goodUse");
+        Map<Integer, Long> goodLongMap = this.goodUse();
+        stopWatch.stop();
+        Assert.isTrue(goodLongMap.size() == ITEM_COUNT, "goodUse size error");
+        Assert.isTrue(goodLongMap.entrySet().stream().mapToLong(Map.Entry::getValue)
+                        .reduce(0, Long::sum) == LOOP_COUNT, "goodUse count error");
+
+        stopWatch.start("normalUse");
+        Map<Integer, Long> normaLongMap = this.normalUse();
+        Assert.isTrue(normaLongMap.size() == ITEM_COUNT, "normalUse size error");
+        Assert.isTrue(normaLongMap.entrySet().stream().mapToLong(Map.Entry::getValue)
+                .reduce(0, Long::sum) == LOOP_COUNT, "normalUse count error");
+        stopWatch.stop();
+        log.info(stopWatch.prettyPrint());
+        return true;
+    }
+
+    private Map<Integer, Long> normalUse() throws InterruptedException {
         ConcurrentMap<Integer, Long> concurrentHashMap = new ConcurrentHashMap<>();
         ForkJoinPool forkJoinPool = new ForkJoinPool(THREAD_COUNT);
         forkJoinPool.execute(new Runnable() {
@@ -48,15 +66,10 @@ public class ConcurrentHashMapPerformanceController {
         });
         forkJoinPool.shutdown();
         forkJoinPool.awaitTermination(1, TimeUnit.HOURS);
-        stopWatch.stop();
-        log.info(stopWatch.prettyPrint());
         return concurrentHashMap;
     }
 
-    @GetMapping("good")
-    public Map<Integer, Long> goodUse() throws InterruptedException {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
+    private Map<Integer, Long> goodUse() throws InterruptedException {
         ConcurrentMap<Integer, LongAdder> concurrentHashMap = new ConcurrentHashMap<>();
         ForkJoinPool forkJoinPool = new ForkJoinPool(THREAD_COUNT);
         forkJoinPool.execute(new Runnable() {
@@ -83,8 +96,6 @@ public class ConcurrentHashMapPerformanceController {
         for (Map.Entry<Integer, LongAdder> entry : concurrentHashMap.entrySet()) {
             hashMap.put(entry.getKey(), entry.getValue().longValue());
         }
-        stopWatch.stop();
-        log.info(stopWatch.prettyPrint());
         return hashMap;
     }
 }
