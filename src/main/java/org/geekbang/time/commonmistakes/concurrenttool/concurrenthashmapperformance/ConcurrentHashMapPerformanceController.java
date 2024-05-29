@@ -79,6 +79,7 @@ public class ConcurrentHashMapPerformanceController {
                     @Override
                     public void accept(int value) {
                         final Integer key = ThreadLocalRandom.current().nextInt(ITEM_COUNT);
+                        // 改进：使用 ConcurrentHashMap 的原子性方法 computeIfAbsent 来做复合逻辑操作
                         concurrentHashMap.computeIfAbsent(key, new Function<Integer, LongAdder>() {
                             @Override
                             public LongAdder apply(Integer s) {
