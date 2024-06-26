@@ -1,0 +1,11 @@
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+  jpa:
+    generate-ddl: true
+#  datasource:
+#    url: jdbc:mysql://127.0.0.1:3306/db_icsc_dev?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=UTF-8
+#    username: root
+#    password: intic0521
